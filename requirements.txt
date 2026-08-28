@@ -1,0 +1,17 @@
+streamlit
+openai
+supabase
+python-dotenv
+geopy
+google-auth
+google-api-python-client
+reportlab
+plotly
+PyPDF2
+beautifulsoup4
+requests
+pypdf
+fpdf2
+openpyxl
+numpy
+matplotlib
