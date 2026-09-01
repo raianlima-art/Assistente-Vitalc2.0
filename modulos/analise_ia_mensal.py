@@ -88,7 +88,7 @@ def iniciar():
 
         usou_fechamento = False
 
-        # 1. TENTA BUSCAR DA TABELA DE FECHAMENTO (MESES FECHADOS/ARQUIVADOS)
+        # 1. TENTA BUSCAR DA TABELA DE FECHAMENTO (MESES FECHADOS)
         try:
             resp_fechamento = (
                 supabase.table("fechamento_mensal")
@@ -119,15 +119,26 @@ def iniciar():
         except Exception:
             usou_fechamento = False
 
-        # 2. SE NÃO HOUVER FECHAMENTO (MÊS ATIVO COMO SETEMBRO), CALCULA DIRETO DE 'COTACOES'
+        # 2. SE NÃO HOUVER FECHAMENTO, CALCULA APENAS PEDIDOS ATIVOS
         if not usou_fechamento:
             try:
+                # Mapeia IDs dos pedidos válidos (não recusados)
+                resp_compras = (
+                    supabase.table("solicitacoes_compras")
+                    .select("id")
+                    .in_("status", ["Pendente", "Aguardando entrega", "Aguardando NF", "Finalizado"])
+                    .execute()
+                    .data
+                ) or []
+                ids_validos = set(str(item["id"]) for item in resp_compras)
+
                 res_cot = supabase.table("cotacoes").select("*").execute().data or []
                 
                 dados_mes = [
                     c for c in res_cot
-                    if str(c.get("data_cotacao", "")).startswith(f"{ano_sel}-{mes_num}")
-                    or str(c.get("created_at", "")).startswith(f"{ano_sel}-{mes_num}")
+                    if (str(c.get("data_cotacao", "")).startswith(f"{ano_sel}-{mes_num}")
+                        or str(c.get("created_at", "")).startswith(f"{ano_sel}-{mes_num}"))
+                    and (c.get("pedido_id") is None or str(c.get("pedido_id")) in ids_validos)
                 ]
 
                 if dados_mes:
