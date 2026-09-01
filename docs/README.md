@@ -31,7 +31,7 @@ Plataforma corporativa full-stack desenvolvida em **Python** e **Streamlit** par
 
 O sistema utiliza 4 tabelas conectadas:
 
-| Tabela | Função |
+| Tabela | Função | 
 | :--- | :--- |
 | **`solicitacoes_compras`** | Registra todos os pedidos de insumos/peças criados no Chat ou via ADM. |
 | **`cotacoes`** | Armazena os comparativos de preços de fornecedores, médias e economia gerada. |
@@ -76,8 +76,8 @@ SUPABASE_URL="[https://seu-projeto.supabase.co](https://seu-projeto.supabase.co)
 SUPABASE_KEY="sua-chave-anon-ou-service-role"
 
 # Controle de Acesso
-ADM_PASSWORD="admin123"
-ESTOQUE_PASSWORD="estoque123"
+ADM_PASSWORD="senha"
+ESTOQUE_PASSWORD="senha"
 
 # Notificações E-mail (SMTP Gmail)
 EMAIL_REMETENTE="seu-email@gmail.com"
