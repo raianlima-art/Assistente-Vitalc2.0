@@ -88,7 +88,7 @@ def iniciar():
 
         usou_fechamento = False
 
-        # 1. TENTA BUSCAR DA TABELA DE FECHAMENTO (MESES ARQUIVADOS/FECHADOS)
+        # 1. TENTA BUSCAR DA TABELA DE FECHAMENTO (MESES FECHADOS/ARQUIVADOS)
         try:
             resp_fechamento = (
                 supabase.table("fechamento_mensal")
@@ -108,9 +108,7 @@ def iniciar():
 
                 pct_econ = (tot_econ / tot_orcado * 100) if tot_orcado > 0 else 0.0
                 
-                # Meta de Economia esperada (diferença entre orçamento total e meta de gasto)
                 meta_economia_esperada = tot_orcado - meta_gasto
-                
                 if meta_economia_esperada > 0:
                     pct_meta = min(100.0, (tot_econ / meta_economia_esperada) * 100)
                 else:
@@ -121,7 +119,7 @@ def iniciar():
         except Exception:
             usou_fechamento = False
 
-        # 2. SE NÃO HOUVER FECHAMENTO (MÊS ATIVO COMO SETEMBRO), CALCULA AO VIVO
+        # 2. SE NÃO HOUVER FECHAMENTO (MÊS ATIVO COMO SETEMBRO), CALCULA DIRETO DE 'COTACOES'
         if not usou_fechamento:
             try:
                 res_cot = supabase.table("cotacoes").select("*").execute().data or []
@@ -132,18 +130,21 @@ def iniciar():
                     or str(c.get("created_at", "")).startswith(f"{ano_sel}-{mes_num}")
                 ]
 
-                tot_orcado = sum(float(c.get("media_orcam", 0) or 0) for c in dados_mes)
-                tot_gasto = sum(float(c.get("valor_comprado", 0) or 0) for c in dados_mes)
-                
-                if tot_gasto == 0 and tot_orcado > 0:
-                    tot_gasto = sum(float(c.get("valor_a", 0) or c.get("media_orcam", 0) or 0) for c in dados_mes)
+                if dados_mes:
+                    tot_orcado = sum(float(c.get("media_orcam", 0) or 0) for c in dados_mes)
+                    tot_gasto = sum(float(c.get("valor_comprado", 0) or 0) for c in dados_mes)
+                    
+                    if tot_gasto == 0 and tot_orcado > 0:
+                        tot_gasto = sum(float(c.get("valor_a", 0) or c.get("media_orcam", 0) or 0) for c in dados_mes)
 
-                tot_econ = tot_orcado - tot_gasto if tot_orcado >= tot_gasto else sum(float(c.get("economia_real", 0) or 0) for c in dados_mes)
+                    tot_econ = sum(float(c.get("economia_real", 0) or 0) for c in dados_mes)
+                    if tot_econ == 0 and tot_orcado >= tot_gasto:
+                        tot_econ = tot_orcado - tot_gasto
 
-                pct_econ = (tot_econ / tot_orcado * 100) if tot_orcado > 0 else 0.0
-                metas_ok = sum(1 for c in dados_mes if "Atingida" in str(c.get("status_meta", "")) and "Não" not in str(c.get("status_meta", "")))
-                pct_meta = (metas_ok / len(dados_mes) * 100) if dados_mes else 100.0
-                qtd_itens = len(dados_mes)
+                    pct_econ = (tot_econ / tot_orcado * 100) if tot_orcado > 0 else 0.0
+                    metas_ok = sum(1 for c in dados_mes if "Atingida" in str(c.get("status_meta", "")) and "Não" not in str(c.get("status_meta", "")))
+                    pct_meta = (metas_ok / len(dados_mes) * 100) if dados_mes else 100.0
+                    qtd_itens = len(dados_mes)
             except Exception:
                 pass
 
